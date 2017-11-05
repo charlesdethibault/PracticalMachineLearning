@@ -1,0 +1,70 @@
+---
+title: "Practical Machine Learning Project"
+author: "Charles-Antoine de Thibault"
+date: "5 November 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(caret)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+set.seed(2017)
+```
+
+#download train data
+```{r}
+urltrain <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+filename <- "pml-training.csv"
+tmp <- tempfile()
+if(!file.exists(filename))download.file(urltrain, destfile = filename)
+#data_train <- read.csv(filename)
+data_train <- read.csv(filename, na.strings=c("", "NA", "#DIV/0!"), row.names = 1)
+```
+
+```{r}
+#download test data
+urltest <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+filename <- "pml-testing.csv"
+tmp <- tempfile()
+if(!file.exists(filename))download.file(urltest, destfile = filename)
+data_test <- read.csv(filename, na.strings=c("", "NA", "#DIV/0!"), row.names = 1)
+```
+
+```{r}
+# remove na
+data_train_clean <- data_train[,!sapply(data_train,function(x) any(is.na(x)))]
+data_test_clean <- data_test[,!sapply(data_test,function(x) any(is.na(x)))]
+```
+
+```{r}
+# remove personal info from users which are not predicators
+data_train_clean <-data_train_clean[,-c(1:6)]
+data_test_clean <-data_test_clean[,-c(1:6)]
+```
+
+```{r}
+#partiction a testing dataset so the acutal data_test can be used as validation test.
+inTrain <- createDataPartition(y=data_train_clean$classe, p=0.75, list=FALSE)
+Training <- data_train_clean[inTrain, ] 
+Testing <- data_train_clean[-inTrain, ]
+```
+
+```{r}
+# predcit using Decision tree
+dt <- train(classe ~ .,method="rpart",data=Training)
+print(dt$finalModel)
+plot(dt$finalModel, uniform=TRUE, 
+     main="Classification Tree")
+text(dt$finalModel, use.n=TRUE, all=TRUE, cex=.8)
+library(rattle)
+fancyRpartPlot(dt$finalModel)
+
+prediction_dt <- predict(dt,newdata=Testing)
+confusionMatrix(prediction_dt,Testing$classe)
+```
