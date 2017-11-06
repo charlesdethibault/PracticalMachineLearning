@@ -1,8 +1,3 @@
-Practical Machine Learning Project
-================
-Charles-Antoine de Thibault
-5 November 2017
-
 ``` r
 library(caret)
 ```
@@ -99,7 +94,7 @@ plot(dt$finalModel, uniform=TRUE,
 text(dt$finalModel, use.n=TRUE, all=TRUE, cex=.8)
 ```
 
-![](FinalProject_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
+![](FinalProject_files/figure-markdown_github/unnamed-chunk-7-1.png)
 
 ``` r
 library(rattle)
@@ -120,7 +115,7 @@ library(rattle)
 fancyRpartPlot(dt$finalModel)
 ```
 
-![](FinalProject_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-2.png)
+![](FinalProject_files/figure-markdown_github/unnamed-chunk-7-2.png)
 
 ``` r
 prediction_dt <- predict(dt,newdata=Testing)
