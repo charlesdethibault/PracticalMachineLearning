@@ -2,7 +2,7 @@
 title: "Practical Machine Learning Project"
 author: "Charles-Antoine de Thibault"
 date: "5 November 2017"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
