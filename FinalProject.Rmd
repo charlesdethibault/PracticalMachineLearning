@@ -6,67 +6,107 @@ output:
    md_document:
     variant: markdown_github
 ---
+# Summary
+
+In this research we attempt to compare the difference of performance between a decision tree and a random forest model.
+
+For this research we use the HAR dataset for benchmarking.
+
+We use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants and define if the exercise has been properly done. The testing data rate the execution as below:
+
+*exactly according to the specification (A)
+
+*throwing elbows to the front (B)
+
+*lifting the dumbbell only halfway (C)
+
+*lowering the dumbbell only halfway (D)
+
+*throwing the hips to the front (E)
+
+We split the train data into 75%/25% to train our models on the first 75% and test our models on the last 25%.
+
+The random forest performed much better as the accuracy was almost twice higher and the Kappa almost 3 times higher than the decision tree model. 
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-```{r}
+# load libraries
+```{r warning=FALSE, warning =FALSE, message=FALSE}
 library(caret)
 library(randomForest)
 library(rpart)
 library(rpart.plot)
+library(rattle)
 set.seed(2017)
 ```
-
 #download train data
 ```{r}
 urltrain <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 filename <- "pml-training.csv"
 tmp <- tempfile()
 if(!file.exists(filename))download.file(urltrain, destfile = filename)
-#data_train <- read.csv(filename)
 data_train <- read.csv(filename, na.strings=c("", "NA", "#DIV/0!"), row.names = 1)
 ```
-
-```{r}
 #download test data
+```{r}
 urltest <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
 filename <- "pml-testing.csv"
 tmp <- tempfile()
 if(!file.exists(filename))download.file(urltest, destfile = filename)
 data_test <- read.csv(filename, na.strings=c("", "NA", "#DIV/0!"), row.names = 1)
 ```
-
-```{r}
 # remove na
+```{r}
 data_train_clean <- data_train[,!sapply(data_train,function(x) any(is.na(x)))]
 data_test_clean <- data_test[,!sapply(data_test,function(x) any(is.na(x)))]
 ```
-
-```{r}
 # remove personal info from users which are not predicators
+```{r}
 data_train_clean <-data_train_clean[,-c(1:6)]
 data_test_clean <-data_test_clean[,-c(1:6)]
 ```
-
-```{r}
 #partiction a testing dataset so the acutal data_test can be used as validation test.
+```{r}
 inTrain <- createDataPartition(y=data_train_clean$classe, p=0.75, list=FALSE)
 Training <- data_train_clean[inTrain, ] 
 Testing <- data_train_clean[-inTrain, ]
 ```
+# predict using Decision tree
+The decision tree does not provide great results as the accuracy is .4935 and the Kappa is .3376.
 
 ```{r}
-# predcit using Decision tree
 dt <- train(classe ~ .,method="rpart",data=Training)
 print(dt$finalModel)
-plot(dt$finalModel, uniform=TRUE, 
-     main="Classification Tree")
-text(dt$finalModel, use.n=TRUE, all=TRUE, cex=.8)
-library(rattle)
+#plot(dt$finalModel, uniform=TRUE, main="Classification Tree")
+#text(dt$finalModel, use.n=TRUE, all=TRUE, cex=.8)
+
 fancyRpartPlot(dt$finalModel)
 
 prediction_dt <- predict(dt,newdata=Testing)
 confusionMatrix(prediction_dt,Testing$classe)
 ```
+# predict randomforest
+The model is loaded as it was saved earlier and it avoids high computation time. The file can be found in the repo.
+
+As we can see the random forest provides much better prediction as the accuracy is .9898 and the Kappa is .9871 while for the decision tree, we had an accuracy of .4935 and a Kappa of .3376
+```{r}
+#rf <- train(classe ~ .,method="rf",data=Training)
+load(file = "rf.rda")
+print(rf$finalModel)
+#plot(rf$finalModel, uniform=TRUE, main="Random forest")
+#text(rf$finalModel, use.n=TRUE, all=TRUE, cex=.8)
+
+
+varimp <- varImp(rf, varImp.train=FALSE)
+plot(varimp, top=20)
+
+
+
+prediction_rf <- predict(rf,newdata=Testing)
+confusionMatrix(prediction_rf,Testing$classe)
+```
+
+#References
+Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements. Proceedings of 21st Brazilian Symposium on Artificial Intelligence. Advances in Artificial Intelligence - SBIA 2012. In: Lecture Notes in Computer Science. , pp. 52-61. Curitiba, PR: Springer Berlin / Heidelberg, 2012. ISBN 978-3-642-34458-9. DOI: 10.1007/978-3-642-34459-6_6. 
